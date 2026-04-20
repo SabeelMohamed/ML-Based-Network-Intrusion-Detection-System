@@ -23,6 +23,7 @@ model = None
 scaler = None
 shap_explainer = None
 feature_names = None
+load_error = None
 state_lock = Lock()
 recent_detections = deque(maxlen=200)
 network_stats = {
@@ -42,11 +43,12 @@ def _model_path(file_name):
 
 
 def load_model():
-    global model, scaler, shap_explainer, feature_names
+    global model, scaler, shap_explainer, feature_names, load_error
     try:
         model = joblib.load(_model_path("intrusion_model.pkl"))
         scaler = joblib.load(_model_path("scaler.pkl"))
         print("Model loaded successfully")
+        load_error = None
 
         try:
             shap_explainer = joblib.load(_model_path("shap_explainer.pkl"))
@@ -59,6 +61,7 @@ def load_model():
 
         return True
     except Exception as error:
+        load_error = str(error)
         print(f"Error loading model: {error}")
         return False
 
@@ -208,6 +211,7 @@ def health_check():
             "status": "healthy",
             "model_loaded": model is not None,
             "monitoring": network_stats["monitoring"],
+            "load_error": load_error,
         }
     )
 
