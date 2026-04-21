@@ -268,10 +268,12 @@ def explain_prediction():
         return jsonify({"error": str(error)}), 500
 
 
+load_model()
+
+
 if __name__ == "__main__":
     print("=" * 60)
     print("IntrusionX - ML API Service")
     print("=" * 60)
-    load_model()
     port = int(os.environ.get("PORT", 5001))
     app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
