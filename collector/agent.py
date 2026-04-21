@@ -76,7 +76,14 @@ def send_prediction_to_backend(features, prediction_response):
         },
     }
 
-    requests.post(BACKEND_API_URL, json=payload, headers=headers, timeout=REQUEST_TIMEOUT)
+    backend_response = requests.post(
+        BACKEND_API_URL,
+        json=payload,
+        headers=headers,
+        timeout=REQUEST_TIMEOUT,
+    )
+    backend_response.raise_for_status()
+    return backend_response
 
 
 def process_packet(packet):
@@ -91,13 +98,21 @@ def process_packet(packet):
         ml_response.raise_for_status()
         prediction_data = ml_response.json()
 
-        send_prediction_to_backend(features, prediction_data)
+        backend_response = send_prediction_to_backend(features, prediction_data)
 
         print(
             f"Prediction={prediction_data.get('prediction')} "
             f"Label={prediction_data.get('prediction_label')} "
-            f"Confidence={prediction_data.get('confidence')}"
+            f"Confidence={prediction_data.get('confidence')} "
+            f"SavedStatus={backend_response.status_code}"
         )
+    except requests.HTTPError as error:
+        response = error.response
+        status = response.status_code if response is not None else "N/A"
+        text = response.text if response is not None else str(error)
+        print(f"Collector HTTP error: status={status} detail={text}")
+    except requests.RequestException as error:
+        print(f"Collector request error: {error}")
     except Exception as error:
         print(f"Collector error: {error}")
 
