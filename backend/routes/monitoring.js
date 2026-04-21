@@ -5,7 +5,13 @@ const auth = require('../middleware/auth');
 const Alert = require('../models/Alert');
 const NetworkStats = require('../models/NetworkStats');
 
-const ML_SERVICE = process.env.ML_SERVICE_URL || 'http://localhost:5001';
+const isProduction = process.env.NODE_ENV === 'production';
+const configuredMlService = process.env.ML_SERVICE_URL;
+const ML_SERVICE = isProduction
+  ? (configuredMlService && !configuredMlService.includes('localhost')
+      ? configuredMlService
+      : 'https://intrusionx-ml.onrender.com')
+  : (configuredMlService || 'http://localhost:5001');
 
 router.post('/start', auth, async (req, res) => {
   try {
